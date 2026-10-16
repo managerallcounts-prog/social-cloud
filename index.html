@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Cloud</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5fa;
+      color: #20243a;
+    }
+    header {
+      background: #20243a;
+      color: white;
+      padding: 24px;
+      text-align: center;
+    }
+    main {
+      max-width: 760px;
+      margin: 25px auto;
+      padding: 18px;
+    }
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      box-shadow: 0 3px 14px #0000000c;
+    }
+    label {
+      display: block;
+      margin: 15px 0 7px;
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font: inherit;
+    }
+    input, textarea {
+      border: 1px solid #cbd0df;
+      background: white;
+    }
+    .networks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 15px 0;
+    }
+    .networks label {
+      margin: 0;
+      padding: 12px;
+      border: 1px solid #e0e3ed;
+      border-radius: 8px;
+      font-weight: normal;
+    }
+    .networks input { width: auto; }
+    button {
+      border: 0;
+      background: #6654e8;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    button:hover { background: #5140c7; }
+    .task {
+      padding: 12px;
+      margin-top: 10px;
+      background: #f3f5fa;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+    .note { color: #666d80; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>☁️ Social Cloud</h1>
+    <p>Organize suas publicações em um só lugar</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Nova publicação</h2>
+      <form id="postForm">
+        <label for="video">1. Escolha seu vídeo</label>
+        <input id="video" type="file" accept="video/*" required>
+
+        <label>2. Escolha as plataformas</label>
+        <div class="networks">
+          <label><input type="checkbox" value="Instagram"> Instagram</label>
+          <label><input type="checkbox" value="Facebook"> Facebook</label>
+          <label><input type="checkbox" value="TikTok"> TikTok</label>
+          <label><input type="checkbox" value="Pinterest"> Pinterest</label>
+          <label><input type="checkbox" value="Shopee Video"> Shopee Video</label>
+        </div>
+
+        <label for="caption">3. Legenda do vídeo</label>
+        <textarea id="caption" rows="4"
+          placeholder="Escreva a legenda da sua publicação..."></textarea>
+
+        <label for="schedule">4. Data e hora planejadas (opcional)</label>
+        <input id="schedule" type="datetime-local">
+
+        <button type="submit">Adicionar à minha lista</button>
+      </form>
+      <p class="note">
+        Protótipo de teste: ainda não envia nem publica vídeos nas plataformas.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Minha lista de publicações</h2>
+      <div id="tasks">
+        <p class="note">Suas publicações de teste aparecerão aqui.</p>
+      </div>
+      <button id="clear" type="button">Limpar lista</button>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("postForm");
+    const tasks = document.getElementById("tasks");
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const video = document.getElementById("video").files[0];
+      const caption = document.getElementById("caption").value.trim();
+      const schedule = document.getElementById("schedule").value;
+      const platforms = Array.from(
+        document.querySelectorAll(".networks input:checked")
+      ).map(item => item.value);
+
+      if (!video) {
+        alert("Escolha um vídeo primeiro.");
+        return;
+      }
+
+      if (platforms.length === 0) {
+        alert("Selecione pelo menos uma plataforma.");
+        return;
+      }
+
+      if (tasks.querySelector(".note")) {
+        tasks.innerHTML = "";
+      }
+
+      const task = document.createElement("div");
+      task.className = "task";
+
+      const title = document.createElement("strong");
+      title.textContent = video.name;
+
+      const details = document.createElement("p");
+      details.textContent = "Plataformas: " + platforms.join(", ");
+
+      const description = document.createElement("p");
+      description.textContent = "Legenda: " + (caption || "Sem legenda");
+
+      const date = document.createElement("p");
+      date.textContent = "Data planejada: " +
+        (schedule ? schedule.replace("T", " ") : "Não definida");
+
+      task.append(title, details, description, date);
+      tasks.prepend(task);
+      form.reset();
+    });
+
+    document.getElementById("clear").addEventListener("click", function() {
+      tasks.innerHTML =
+        '<p class="note">Suas publicações de teste aparecerão aqui.</p>';
+    });
+  </script>
+</body>
+</html>
