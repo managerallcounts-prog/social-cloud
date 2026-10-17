@@ -4,78 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Social Cloud</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f5fa;
-      color: #20243a;
-    }
-    header {
-      background: #20243a;
-      color: white;
-      padding: 24px;
-      text-align: center;
-    }
-    main {
-      max-width: 760px;
-      margin: 25px auto;
-      padding: 18px;
-    }
-    .card {
-      background: white;
-      padding: 22px;
-      margin-bottom: 18px;
-      border-radius: 14px;
-      box-shadow: 0 3px 14px #0000000c;
-    }
-    label {
-      display: block;
-      margin: 15px 0 7px;
-      font-weight: bold;
-    }
-    input, textarea, button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      font: inherit;
-    }
-    input, textarea {
-      border: 1px solid #cbd0df;
-      background: white;
-    }
-    .networks {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin: 15px 0;
-    }
-    .networks label {
-      margin: 0;
-      padding: 12px;
-      border: 1px solid #e0e3ed;
-      border-radius: 8px;
-      font-weight: normal;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f3f5fa; color: #20243a; }
+    header { background: #20243a; color: white; padding: 24px; text-align: center; }
+    main { max-width: 760px; margin: 25px auto; padding: 18px; }
+    .card { background: white; padding: 22px; margin-bottom: 18px; border-radius: 14px; box-shadow: 0 3px 14px #0000000c; }
+    label { display: block; margin: 15px 0 7px; font-weight: bold; }
+    input, textarea, button { width: 100%; padding: 12px; border-radius: 8px; font: inherit; }
+    input, textarea { border: 1px solid #cbd0df; background: white; }
+    .networks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+    .networks label { margin: 0; padding: 12px; border: 1px solid #e0e3ed; border-radius: 8px; font-weight: normal; }
     .networks input { width: auto; }
-    button {
-      border: 0;
-      background: #6654e8;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 12px;
-    }
+    button { border: 0; background: #6654e8; color: white; font-weight: bold; cursor: pointer; margin-top: 12px; }
     button:hover { background: #5140c7; }
-    .task {
-      padding: 12px;
-      margin-top: 10px;
-      background: #f3f5fa;
-      border-radius: 8px;
-      overflow-wrap: anywhere;
-    }
+    .secondary { background: #596174; }
+    .task { padding: 12px; margin-top: 10px; background: #f3f5fa; border-radius: 8px; overflow-wrap: anywhere; }
     .note { color: #666d80; font-size: 14px; }
+    .message { margin-top: 12px; overflow-wrap: anywhere; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -85,97 +33,264 @@
   </header>
 
   <main>
-    <section class="card">
-      <h2>Nova publicação</h2>
-      <form id="postForm">
-        <label for="video">1. Escolha seu vídeo</label>
-        <input id="video" type="file" accept="video/*" required>
-
-        <label>2. Escolha as plataformas</label>
-        <div class="networks">
-          <label><input type="checkbox" value="Instagram"> Instagram</label>
-          <label><input type="checkbox" value="Facebook"> Facebook</label>
-          <label><input type="checkbox" value="TikTok"> TikTok</label>
-          <label><input type="checkbox" value="Pinterest"> Pinterest</label>
-          <label><input type="checkbox" value="Shopee Video"> Shopee Video</label>
-        </div>
-
-        <label for="caption">3. Legenda do vídeo</label>
-        <textarea id="caption" rows="4"
-          placeholder="Escreva a legenda da sua publicação..."></textarea>
-
-        <label for="schedule">4. Data e hora planejadas (opcional)</label>
-        <input id="schedule" type="datetime-local">
-
-        <button type="submit">Adicionar à minha lista</button>
+    <section class="card" id="loginArea">
+      <h2>Entrar no Social Cloud</h2>
+      <form id="loginForm">
+        <label for="loginEmail">E-mail</label>
+        <input type="email" id="loginEmail" autocomplete="username" placeholder="Seu e-mail" required>
+        <label for="loginPassword">Senha</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Sua senha" required>
+        <button type="submit" id="loginButton">Entrar</button>
       </form>
-      <p class="note">
-        Protótipo de teste: ainda não envia nem publica vídeos nas plataformas.
-      </p>
+      <p id="loginMessage" class="message" role="status"></p>
     </section>
 
-    <section class="card">
-      <h2>Minha lista de publicações</h2>
-      <div id="tasks">
-        <p class="note">Suas publicações de teste aparecerão aqui.</p>
-      </div>
-      <button id="clear" type="button">Limpar lista</button>
-    </section>
+    <div id="appArea" hidden>
+      <section class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <h2>Nova publicação</h2>
+          <button type="button" class="secondary" id="logoutButton" style="width:auto; margin-top:0;">Sair</button>
+        </div>
+        <form id="postForm">
+          <label for="video">1. Escolha seu vídeo</label>
+          <input id="video" type="file" accept="video/*" required>
+
+          <label>2. Escolha as plataformas</label>
+          <div class="networks">
+            <label><input type="checkbox" value="Instagram"> Instagram</label>
+            <label><input type="checkbox" value="Facebook"> Facebook</label>
+            <label><input type="checkbox" value="TikTok"> TikTok</label>
+            <label><input type="checkbox" value="Pinterest"> Pinterest</label>
+            <label><input type="checkbox" value="Shopee Video"> Shopee Video</label>
+          </div>
+
+          <label for="caption">3. Legenda do vídeo</label>
+          <textarea id="caption" rows="4" placeholder="Escreva a legenda da sua publicação..."></textarea>
+
+          <label for="schedule">4. Data e hora planejadas (opcional)</label>
+          <input id="schedule" type="datetime-local">
+
+          <button type="submit" id="saveButton">Adicionar à minha lista</button>
+        </form>
+        <p class="note">O vídeo será enviado ao armazenamento seguro do Supabase (limite de 50 MB). Esta ferramenta organiza os vídeos, mas ainda não publica automaticamente nas plataformas.</p>
+        <p id="postMessage" class="message" role="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Minha lista de publicações</h2>
+        <div id="tasks"><p class="note">Carregando publicações...</p></div>
+        <button id="refreshButton" type="button" class="secondary">Atualizar lista</button>
+      </section>
+    </div>
   </main>
 
   <script>
-    const form = document.getElementById("postForm");
-    const tasks = document.getElementById("tasks");
+    const SUPABASE_URL = "https://abmxkzjciahzfswlkjnl.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_ZDl58h-Ltf6XzOE5z8a0xA_u7a5rfML";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    form.addEventListener("submit", function(event) {
+    const loginArea = document.getElementById("loginArea");
+    const appArea = document.getElementById("appArea");
+    const loginForm = document.getElementById("loginForm");
+    const loginMessage = document.getElementById("loginMessage");
+    const postForm = document.getElementById("postForm");
+    const postMessage = document.getElementById("postMessage");
+    const tasks = document.getElementById("tasks");
+    const saveButton = document.getElementById("saveButton");
+
+    function showSignedIn(isSignedIn) {
+      loginArea.hidden = isSignedIn;
+      appArea.hidden = !isSignedIn;
+    }
+
+    async function carregarPublicacoes() {
+      tasks.innerHTML = '<p class="note">Carregando publicações...</p>';
+
+      const { data, error } = await supabaseClient
+        .from("publicacoes")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        tasks.textContent = "Não foi possível carregar a lista: " + error.message;
+        return;
+      }
+
+      tasks.innerHTML = "";
+      if (!data || data.length === 0) {
+        tasks.innerHTML = '<p class="note">Nenhuma publicação cadastrada.</p>';
+        return;
+      }
+
+      data.forEach((pub) => {
+        const task = document.createElement("div");
+        task.className = "task";
+
+        const title = document.createElement("strong");
+        title.textContent = pub.nome_video || "Vídeo sem nome";
+
+        const details = document.createElement("p");
+        details.textContent = "Plataformas: " +
+          (Array.isArray(pub.plataformas) ? pub.plataformas.join(", ") : "");
+
+        const description = document.createElement("p");
+        description.textContent = "Legenda: " + (pub.legenda || "Sem legenda");
+
+        const date = document.createElement("p");
+        date.textContent = "Data planejada: " +
+          (pub.data_agendada ? new Date(pub.data_agendada).toLocaleString("pt-BR") : "Não definida");
+
+        task.append(title, details, description, date);
+        tasks.appendChild(task);
+      });
+    }
+
+    async function checkSession() {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        loginMessage.textContent = "Erro ao verificar sessão: " + error.message;
+        showSignedIn(false);
+        return;
+      }
+      const signedIn = Boolean(data.session);
+      showSignedIn(signedIn);
+      if (signedIn) await carregarPublicacoes();
+    }
+
+    loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const loginButton = document.getElementById("loginButton");
+      loginButton.disabled = true;
+      loginMessage.textContent = "Entrando...";
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      loginButton.disabled = false;
+      if (error) {
+        loginMessage.textContent = "Não foi possível entrar: " + error.message;
+        return;
+      }
+
+      loginMessage.textContent = "";
+      showSignedIn(true);
+      await carregarPublicacoes();
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) {
+        postMessage.textContent = "Erro ao sair: " + error.message;
+        return;
+      }
+      showSignedIn(false);
+      loginMessage.textContent = "Você saiu da sua conta.";
+      postMessage.textContent = "";
+      loginForm.reset();
+    });
+
+    postForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      postMessage.textContent = "";
+
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData.session) {
+        showSignedIn(false);
+        postMessage.textContent = "Entre na sua conta antes de salvar publicações.";
+        return;
+      }
 
       const video = document.getElementById("video").files[0];
       const caption = document.getElementById("caption").value.trim();
       const schedule = document.getElementById("schedule").value;
-      const platforms = Array.from(
-        document.querySelectorAll(".networks input:checked")
-      ).map(item => item.value);
+      const platforms = Array.from(document.querySelectorAll(".networks input:checked"))
+        .map((item) => item.value);
 
       if (!video) {
-        alert("Escolha um vídeo primeiro.");
+        postMessage.textContent = "Escolha um vídeo primeiro.";
         return;
       }
-
       if (platforms.length === 0) {
-        alert("Selecione pelo menos uma plataforma.");
+        postMessage.textContent = "Selecione pelo menos uma plataforma.";
         return;
       }
 
-      if (tasks.querySelector(".note")) {
-        tasks.innerHTML = "";
+      if (video.size > 50 * 1024 * 1024) {
+        postMessage.textContent = "O vídeo ultrapassa o limite de 50 MB. Escolha um arquivo menor.";
+        return;
       }
 
-      const task = document.createElement("div");
-      task.className = "task";
+      saveButton.disabled = true;
+      saveButton.textContent = "Enviando vídeo...";
+      postMessage.textContent = "Enviando o vídeo para o Supabase Storage...";
 
-      const title = document.createElement("strong");
-      title.textContent = video.name;
+      try {
+        const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+        if (authError || !authData.user) {
+          throw new Error("Sua sessão não foi confirmada. Saia e entre novamente.");
+        }
 
-      const details = document.createElement("p");
-      details.textContent = "Plataformas: " + platforms.join(", ");
+        // Nome seguro e caminho separado por usuário para evitar colisões.
+        const safeName = video.name
+          .normalize("NFKD")
+          .replace(/[\\u0300-\\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storagePath = `${authData.user.id}/${Date.now()}-${safeName}`;
 
-      const description = document.createElement("p");
-      description.textContent = "Legenda: " + (caption || "Sem legenda");
+        const { error: uploadError } = await supabaseClient.storage
+          .from("videos")
+          .upload(storagePath, video, {
+            cacheControl: "3600",
+            contentType: video.type || "application/octet-stream",
+            upsert: false
+          });
 
-      const date = document.createElement("p");
-      date.textContent = "Data planejada: " +
-        (schedule ? schedule.replace("T", " ") : "Não definida");
+        if (uploadError) {
+          throw new Error("Falha ao enviar o vídeo: " + uploadError.message);
+        }
 
-      task.append(title, details, description, date);
-      tasks.prepend(task);
-      form.reset();
+        postMessage.textContent = "Vídeo enviado. Salvando os dados da publicação...";
+        saveButton.textContent = "Salvando dados...";
+
+        const { error: insertError } = await supabaseClient
+          .from("publicacoes")
+          .insert({
+            nome_video: video.name,
+            legenda: caption,
+            plataformas: platforms,
+            data_agendada: schedule ? new Date(schedule).toISOString() : null,
+            status: "rascunho",
+            video_url: storagePath
+          });
+
+        if (insertError) {
+          throw new Error("O vídeo foi enviado, mas os dados não foram salvos: " + insertError.message +
+            ". O arquivo ficou armazenado em: " + storagePath);
+        }
+
+        postForm.reset();
+        postMessage.textContent = "Sucesso! O vídeo foi enviado ao Storage e os dados da publicação foram salvos.";
+        await carregarPublicacoes();
+      } catch (err) {
+        postMessage.textContent = err.message || "Ocorreu um erro durante o envio.";
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = "Adicionar à minha lista";
+      }
     });
 
-    document.getElementById("clear").addEventListener("click", function() {
-      tasks.innerHTML =
-        '<p class="note">Suas publicações de teste aparecerão aqui.</p>';
+    document.getElementById("refreshButton").addEventListener("click", carregarPublicacoes);
+
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      const signedIn = Boolean(session);
+      showSignedIn(signedIn);
+      if (signedIn) {
+        setTimeout(() => carregarPublicacoes(), 0);
+      }
     });
+
+    checkSession();
   </script>
 </body>
 </html>
